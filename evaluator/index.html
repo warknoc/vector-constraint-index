@@ -1,0 +1,426 @@
+<!doctype html>
+<!-- Vector-Constraint Index evaluator. Copyright (c) 2026 Andrew Delgado. Code: MIT License (see LICENSE). Question text in vci-config.js: CC BY 4.0 (see LICENSE-SPEC.md). Vector-Constraint Index, VCI, and Delgado Vector Law are trademarks of Creator 1 LLC (see TRADEMARKS.md). -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>VCI Evaluator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a single test-bench column. Header strip, a progress rail of the kill forks, one question card at a time, then the verdict sheet. */
+:root {
+  --bg:#f3f6f7; --panel:#ffffff; --ink:#12303b; --muted:#56707a; --line:#cfdce1; --wash:#e6eef1;
+  --accent:#1f5f6e; --stop:#a3261c; --pass:#2d6a3a; --gaps:#8a5a00; --warn:#b3561c; --onink:#ffffff;
+  --display:"Archivo", "Liberation Sans", Arial, sans-serif;
+  --body:"Source Serif 4", Charter, Georgia, serif;
+  --mono:"JetBrains Mono", "DejaVu Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#0d1b21; --panel:#132730; --ink:#e3eef1; --muted:#93aab2; --line:#2a4550; --wash:#1a333d;
+  --accent:#6fb6c6; --stop:#ef7a6e; --pass:#7cc48a; --gaps:#e0b04f; --warn:#f09a5c; --onink:#0d1b21; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --bg:#0d1b21; --panel:#132730; --ink:#e3eef1; --muted:#93aab2; --line:#2a4550; --wash:#1a333d;
+  --accent:#6fb6c6; --stop:#ef7a6e; --pass:#7cc48a; --gaps:#e0b04f; --warn:#f09a5c; --onink:#0d1b21; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { background:var(--bg); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.5; margin:0; }
+.wrap { max-width:760px; margin:0 auto; padding-inline:16px; padding-block:20px 56px; }
+header.top { display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px 16px; font-family:var(--display); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); border-bottom:2px solid var(--ink); padding-bottom:8px; }
+h1 { font-family:var(--display); font-weight:800; font-size:clamp(28px,6vw,40px); line-height:1.05; margin:18px 0 6px; text-wrap:balance; }
+.sub { font-style:italic; color:var(--accent); margin:0 0 14px; }
+.quote { background:var(--wash); border-left:4px solid var(--ink); padding:12px 16px; margin:0 0 16px; }
+.quote p { margin:0; font-size:18px; }
+.quote small { font-family:var(--display); color:var(--muted); font-size:12px; }
+.rail { display:flex; flex-wrap:wrap; gap:4px; margin:18px 0 12px; }
+.rail span { font-family:var(--mono); font-size:11px; padding:3px 7px; border:1px solid var(--line); border-radius:2px; color:var(--muted); }
+.rail span.done { background:var(--ink); color:var(--onink); border-color:var(--ink); }
+.rail span.now { border-color:var(--accent); color:var(--accent); font-weight:700; }
+.rail span.hit { background:var(--stop); border-color:var(--stop); color:var(--onink); }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:18px 18px 16px; }
+.qid { display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; font-family:var(--display); font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:8px; }
+.qid b { font-family:var(--mono); font-size:13px; color:var(--accent); letter-spacing:0; }
+.qid .src { margin-left:auto; text-transform:none; letter-spacing:0; font-size:12px; }
+.q { font-size:20px; font-weight:600; line-height:1.35; margin:0 0 8px; text-wrap:balance; }
+.plain { font-style:italic; color:var(--muted); margin:0 0 10px; }
+details.ev { font-size:14px; color:var(--muted); margin:0 0 14px; }
+details.ev summary { cursor:pointer; font-family:var(--display); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+.btns { display:flex; flex-wrap:wrap; gap:8px; }
+button { font-family:var(--display); font-weight:600; font-size:15px; border-radius:3px; border:1.5px solid var(--ink); background:var(--panel); color:var(--ink); padding:10px 16px; cursor:pointer; min-height:44px; }
+button:hover { background:var(--wash); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+button.primary { background:var(--ink); color:var(--onink); }
+button.primary:hover { opacity:.9; }
+button.ghost { border-color:var(--line); color:var(--muted); font-weight:400; }
+.choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:8px; }
+.choices button { text-align:left; display:flex; flex-direction:column; gap:3px; }
+.choices button small { font-family:var(--body); font-weight:400; font-size:13px; color:var(--muted); }
+label { display:block; font-family:var(--display); font-size:13px; font-weight:600; margin:10px 0 4px; }
+input[type=text], textarea { width:100%; font:inherit; font-size:15px; padding:9px 10px; border:1px solid var(--line); border-radius:3px; background:var(--bg); color:var(--ink); }
+.stage { display:grid; gap:8px; }
+.stage label.opt { display:flex; gap:10px; align-items:flex-start; font-family:var(--body); font-weight:400; font-size:15px; border:1px solid var(--line); border-radius:3px; padding:10px; cursor:pointer; margin:0; }
+.stage input { margin-top:5px; }
+.stage b { font-family:var(--display); }
+.escape { border-left:4px solid var(--gaps); background:var(--wash); padding:10px 12px; margin:0 0 14px; font-size:15px; }
+.foot { display:flex; justify-content:space-between; gap:8px; margin-top:14px; }
+.verdict { border-radius:4px; padding:18px; color:var(--onink); margin-bottom:12px; }
+.v-stop { background:var(--stop); } .v-pass { background:var(--pass); } .v-gaps { background:var(--gaps); } .v-warn { background:var(--warn); } .v-neutral { background:var(--muted); }
+.verdict .t { font-family:var(--display); font-weight:800; font-size:clamp(24px,5vw,32px); line-height:1.1; }
+.verdict .p { font-family:var(--display); font-size:13px; opacity:.9; margin-top:2px; }
+.verdict .m { margin-top:8px; font-size:15px; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; }
+.chip { font-family:var(--display); font-size:12px; border:1px solid var(--line); background:var(--panel); padding:3px 8px; border-radius:2px; }
+.chip.flag { border-color:var(--gaps); color:var(--gaps); }
+h2 { font-family:var(--display); font-size:15px; text-transform:uppercase; letter-spacing:.08em; margin:18px 0 8px; }
+.fail { border:1px solid var(--line); border-left:4px solid var(--stop); background:var(--panel); padding:10px 12px; margin-bottom:8px; }
+.fail .id { font-family:var(--mono); font-size:12px; color:var(--accent); }
+.fail .fq { font-size:15px; }
+.fail .fu { font-weight:600; margin-top:4px; }
+.fail.soft { border-left-color:var(--gaps); }
+.path { background:var(--panel); border:1px solid var(--line); border-radius:4px; overflow-x:auto; }
+.path table { border-collapse:collapse; width:100%; font-size:14px; }
+.path td { border-bottom:1px solid var(--line); padding:6px 8px; vertical-align:top; }
+.path td:first-child { font-family:var(--mono); font-size:12px; color:var(--accent); white-space:nowrap; }
+.path td:last-child { font-family:var(--display); font-size:12px; white-space:nowrap; text-align:right; }
+.a-yes { color:var(--pass); } .a-no, .a-cant { color:var(--stop); } .a-na { color:var(--muted); }
+.intro p { margin:0 0 12px; }
+.examples { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+.fine { font-family:var(--display); font-size:12px; color:var(--muted); margin-top:28px; border-top:1px solid var(--line); padding-top:10px; }
+.sample { font-family:var(--display); font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gaps); margin-bottom:6px; }
+textarea.report { font-family:var(--mono); font-size:12px; height:180px; margin-top:8px; }
+@media (prefers-reduced-motion: no-preference) { .card, .verdict { animation: rise .18s ease-out; } @keyframes rise { from { transform:translateY(4px); } to { transform:none; } } }
+</style>
+
+<div class="wrap">
+  <header class="top"><span>Open Diagnostic Specification</span><span id="docref"></span></header>
+  <h1>Vector-Constraint Index</h1>
+  <p class="sub">Is this problem actually being solved?</p>
+  <div class="rail" id="rail" aria-label="Progress"></div>
+  <main id="app"></main>
+  <p class="fine" id="fine"></p>
+</div>
+
+<script src="vci-config.js"></script>
+<script>
+(function () {
+  const C = window.VCI_CONFIG;
+  const A = C.answers;
+  const app = document.getElementById('app');
+  document.getElementById('docref').textContent = C.meta.docRef + ' · v' + C.meta.version;
+  document.getElementById('fine').textContent = C.meta.author + ' · Spec ' + C.meta.license + ', code MIT License · DOI ' + (C.meta.doi || '') + ' · Same answers always give the same verdict. Question text and thresholds live in vci-config.js.';
+
+  const RAIL = ['K0','K1','K2','K3','K4','K5','K6','Gates','Track'];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const pass = a => a === 'yes' || a === 'na';
+
+  // ---------- plan: every step in fixed order, each with a condition ----------
+  function qv(f, S) { return f.q[S.claim] || f.q.default || Object.values(f.q)[0]; }
+  function isResearch(S) { return S.claim === 'research' || S.claim === 'pilot'; }
+
+  function buildPlan() {
+    const P = [];
+    P.push({ id:'SETUP', rail:'K0', kind:'setup' });
+    P.push({ id:'K0', rail:'K0', kind:'yn', meta:C.intake.K0, q:() => C.intake.K0.q,
+      on:(S,a) => pass(a) ? null : { stop:'OUT_OF_SCOPE' } });
+    P.push({ id:'CLAIM', rail:'K0', kind:'claim' });
+    const L = C.laneQuestions;
+    const ongoing = l => l === 'adaptive' || l === 'inflow';
+    P.push({ id:'V0', rail:'K1', kind:'yn', meta:L.V0, q:() => L.V0.q, soft:true, followup:L.V0.followup, when:S => !S.skipLane });
+    P.push({ id:'VC', rail:'K1', kind:'yn', meta:L.VC, q:() => L.VC.q, soft:true, followup:L.VC.followup, when:S => !S.skipLane });
+    P.push({ id:'L1', rail:'K1', kind:'yn', meta:L.L1, q:() => L.L1.q, when:S => !S.skipLane, on:(S,a) => { S.lane = a === 'yes' ? 'adaptive' : null; return null; } });
+    P.push({ id:'VS', rail:'K1', kind:'yn', meta:L.VS, q:() => L.VS.q, when:S => !S.skipLane && S.lane !== 'adaptive',
+      on:(S,a) => { if (a === 'yes') S.lane = 'inflow'; return null; } });
+    P.push({ id:'L2', rail:'K1', kind:'yn', meta:L.L2, q:() => L.L2.q, when:S => !S.skipLane && !ongoing(S.lane),
+      on:(S,a) => { S.lane = a === 'yes' ? 'terminal' : 'finite'; return null; } });
+    P.push({ id:'MGMT', rail:'K1', kind:'auto', when:S => S.claim === 'management' && !ongoing(S.lane),
+      on:() => ({ stop:'MISLABELED', why:'Management was claimed on a ' + C.lanes[P.S.lane].label + ' problem. Ongoing management is only legitimate on an Adaptive problem or at the doors of an Inflow problem.', escape:'Relabel the claim honestly (for example, a mitigation with a stated cost reduction and a reassessment date, or a solution with an end state).', relabel:true, followup:'This problem has an end. State the claim as a solution or a mitigation, with its end.' }) });
+    const MI = C.mislabel;
+    P.push({ id:'M1', rail:'K1', kind:'yn', meta:MI.M1, q:() => MI.M1.q,
+      on:(S,a) => pass(a) ? null : { stop:'MISLABELED', escape:'Relabel the claim as the type it actually is.', relabel:true, followup:MI.M1.followup } });
+    P.push({ id:'M2', rail:'K1', kind:'yn', meta:MI.M2, q:() => MI.M2.q, when:S => (S.claim === 'solution' || S.claim === 'partial') && ongoing(S.lane),
+      on:(S,a) => pass(a) ? null : { stop:'MISLABELED', escape:'Name the sub-problem this closes, or relabel the claim.', relabel:true, followup:MI.M2.followup } });
+    P.push({ id:'M3', rail:'K1', kind:'yn', meta:MI.M3, q:() => MI.M3.q, when:S => S.claim === 'management' && S.lane === 'inflow',
+      on:(S,a) => pass(a) ? null : { stop:'MISLABELED', escape:'Limit the ongoing work to the doors and give the interior an end state.', relabel:true, followup:MI.M3.followup } });
+    ['K2','K3','K3R','K4','K5','K5R','K6'].forEach(fid => {
+      const f = C.forks[fid];
+      P.push({ id:fid, rail:fid.slice(0,2), kind:'yn', meta:f, title:f.title, q:S => qv(f, S),
+        when:S => !f.onlyFor || f.onlyFor.includes(S.claim),
+        on:(S,a) => pass(a) ? null : { stop:f.fail, escape:f.escape, followup:f.followup, reentry:f.reentry } });
+    });
+    C.gauntlet.forEach(g => {
+      P.push({ id:g.id, rail:'Gates', kind:'yn', meta:g, title:'Gate ' + g.gate, q:() => g.q, soft:!g.fatal, na:g.na, followup:g.followup,
+        when:S => (!g.lanes || g.lanes.includes(S.lane)) && (!g.skipFor || !g.skipFor.includes(S.claim)),
+        on:(S,a) => (g.fatal && !pass(a)) ? { stop:g.fatal, followup:g.followup } : null });
+    });
+    const TR = C.trackRecord;
+    P.push({ id:'T0', rail:'Track', kind:'yn', meta:TR.entry, title:'Track record', q:() => TR.entry.q, notFail:true,
+      on:(S,a) => { if (a !== 'yes') S.flags.push('No record: newcomer, track record skipped'); S.hasRecord = a === 'yes'; return null; } });
+    TR.questions.forEach(t => P.push({ id:t.id, rail:'Track', kind:'yn', meta:t, title:'Track record', q:() => t.q, soft:true, followup:t.followup, when:S => S.hasRecord }));
+    return P;
+  }
+  const PLAN = buildPlan();
+
+  // ---------- state ----------
+  let S, answers, stack, mode;
+  function fresh() {
+    return { i:0, claim:null, lane:null, flags:[], log:[], soft:[], stop:null, stage:'before', name:'', stake:'', hasRecord:false, pendingEscape:null, relabels:0 };
+  }
+  function start() { S = fresh(); stack = []; mode = 'run'; P_S(); render(); }
+  function P_S() { PLAN.S = S; }
+  function snapshot() { stack.push(JSON.stringify(S)); }
+  function back() { if (!stack.length) return intro(); S = JSON.parse(stack.pop()); P_S(); render(); }
+
+  function advance() {
+    while (S.i < PLAN.length) {
+      const st = PLAN[S.i];
+      if (st.when && !st.when(S)) { S.i++; continue; }
+      if (st.kind === 'auto') { const r = st.on(S); if (r) { handleFail(st, r, null); return; } S.i++; continue; }
+      return;
+    }
+    finish();
+  }
+
+  function answer(a) {
+    snapshot();
+    const st = PLAN[S.i];
+    const qText = typeof st.q === 'function' ? st.q(S) : '';
+    S.log.push({ id:st.id, q:qText, a });
+    const r = st.on ? st.on(S, a) : null;
+    if (r) return handleFail(st, r, qText);
+    if (st.soft && !pass(a)) S.soft.push({ id:st.id, q:qText, followup:st.followup });
+    S.i++; advance(); render();
+  }
+
+  function handleFail(st, r, qText) {
+    if (st.kind === 'auto') S.log.push({ id:st.id, q:r.why, a:'no' });
+    const canEscape = r.escape && S.stage === 'before';
+    if (canEscape) { S.pendingEscape = { st:st.id, r, q:qText || r.why }; render(); return; }
+    S.stop = { verdict:r.stop, id:st.id, q:qText || r.why, followup:r.followup, reentry:r.reentry, afterCommit:!!r.escape && S.stage === 'after' };
+    finish();
+  }
+
+  function escapeResolve(ok) {
+    snapshot();
+    const pe = S.pendingEscape; S.pendingEscape = null;
+    if (!ok) { S.stop = { verdict:pe.r.stop, id:pe.st, q:pe.q, followup:pe.r.followup, reentry:pe.r.reentry }; S.log.push({ id:pe.st + ' escape', q:pe.r.escape, a:'no' }); return finish(); }
+    S.log.push({ id:pe.st + ' escape', q:pe.r.escape, a:'yes' });
+    S.flags.push('Escape used at ' + pe.st + ' (fixed before commitment)');
+    if (pe.r.relabel) {
+      S.relabels++;
+      if (S.relabels > 2) { S.stop = { verdict:'MISLABELED', id:pe.st, q:'Relabeled more than twice without settling on a claim type.', followup:'Settle on one claim type and defend it.' }; return finish(); }
+      S.i = PLAN.findIndex(p => p.id === 'CLAIM'); S.claim = null; S.skipLane = true; render(); return;
+    }
+    S.i++; advance(); render();
+  }
+
+  function finish() { mode = 'result'; S.done = true; render(); }
+
+  // ---------- verdict ----------
+  function verdictId() {
+    if (S.stop) return S.stop.verdict;
+    const n = S.soft.length, T = C.thresholds;
+    if (n <= T.genuineMaxSoftFails) return 'GENUINE';
+    if (n <= T.gapsMaxSoftFails) return 'GAPS';
+    return 'UNPROVEN';
+  }
+
+  // ---------- rendering ----------
+  function renderRail() {
+    const r = document.getElementById('rail');
+    if (mode === 'intro') { r.innerHTML = RAIL.map(x => `<span>${x}</span>`).join(''); return; }
+    const cur = mode === 'result' ? null : PLAN[S.i] && PLAN[S.i].rail;
+    const curIdx = mode === 'result' ? RAIL.length : RAIL.indexOf(cur);
+    const hit = S.stop ? (PLAN.find(p => p.id === S.stop.id) || {}).rail : null;
+    r.innerHTML = RAIL.map((x, k) => {
+      let c = k < curIdx ? 'done' : (k === curIdx ? 'now' : '');
+      if (hit === x) c = 'hit';
+      if (S.stop && RAIL.indexOf(hit) < k) c = '';
+      return `<span class="${c}">${x}</span>`;
+    }).join('');
+  }
+
+  function render() {
+    renderRail();
+    if (mode === 'intro') return;
+    if (mode === 'result') return renderResult();
+    if (S.pendingEscape) return renderEscape();
+    const st = PLAN[S.i];
+    if (!st) return finish();
+    if (st.kind === 'setup') return renderSetup();
+    if (st.kind === 'claim') return renderClaim();
+    renderQ(st);
+  }
+
+  function footer() {
+    return `<div class="foot"><button class="ghost" id="bk">Back</button><button class="ghost" id="rs">Start over</button></div>`;
+  }
+  function wireFoot() {
+    document.getElementById('bk').onclick = back;
+    document.getElementById('rs').onclick = intro;
+  }
+
+  function renderSetup() {
+    app.innerHTML = `<div class="card">
+      <div class="qid"><b>SETUP</b> Before the first question</div>
+      <label for="nm">What claim are you testing?</label>
+      <input type="text" id="nm" placeholder="Example: City pothole repair contract, year 3" value="${esc(S.name)}">
+      <label for="sk">Your stake in the outcome (evaluator)</label>
+      <input type="text" id="sk" placeholder="Example: Resident, no financial stake" value="${esc(S.stake)}">
+      <label>Stage</label>
+      <div class="stage" role="radiogroup">
+        ${['before','after'].map(k => `<label class="opt"><input type="radio" name="stg" id="stg-${k}" value="${k}" ${S.stage===k?'checked':''}><span><b>${esc(C.stages[k].label)}.</b> ${esc(C.stages[k].note)}</span></label>`).join('')}
+      </div>
+      <div class="btns" style="margin-top:14px"><button class="primary" id="go">Begin</button></div>
+    </div>${footer()}`;
+    document.getElementById('go').onclick = () => {
+      snapshot();
+      S.name = document.getElementById('nm').value.trim();
+      S.stake = document.getElementById('sk').value.trim();
+      S.stage = (document.querySelector('input[name=stg]:checked') || {}).value || 'before';
+      S.i++; advance(); render();
+    };
+    wireFoot();
+  }
+
+  function renderClaim() {
+    app.innerHTML = `<div class="card">
+      <div class="qid"><b>K0</b> Claim type <span class="src">Declared by the solver</span></div>
+      <p class="q">What is the solver claiming to deliver?</p>
+      <p class="plain">Pick what they say it is. VCI checks later whether that label is honest.</p>
+      <div class="choices">${Object.entries(C.claimTypes).map(([k,v]) => `<button data-k="${k}"><span>${esc(v.label)}</span><small>${esc(v.does)}</small></button>`).join('')}</div>
+    </div>${footer()}`;
+    app.querySelectorAll('.choices button').forEach(b => b.onclick = () => {
+      snapshot(); S.claim = b.dataset.k; S.log.push({ id:'CLAIM', q:'Claim type declared', a:'type:' + b.dataset.k }); S.i++; advance(); render();
+    });
+    wireFoot();
+  }
+
+  function renderQ(st) {
+    const m = st.meta || {};
+    const q = st.q(S);
+    const title = st.title || ((st.id.startsWith('L') || st.id.startsWith('V')) ? 'Vectors and lane' : st.id.startsWith('M') ? 'Label check' : 'Intake');
+    const ev = m.evidence ? `<details class="ev"><summary>What counts as Yes</summary><p>${esc(m.evidence)}</p></details>` : '';
+    app.innerHTML = `<div class="card">
+      <div class="qid"><b>${esc(st.id)}</b> ${esc(title)}${st.soft ? ' · soft' : ''}<span class="src">${esc(m.source || '')}</span></div>
+      <p class="q">${esc(q)}</p>
+      ${m.plain ? `<p class="plain">${esc(m.plain)}</p>` : ''}
+      ${m.naNote ? `<p class="plain" style="font-style:normal;font-size:14px">${esc(m.naNote)}</p>` : ''}
+      ${ev}
+      <div class="btns">
+        <button data-a="yes">${A.yes}</button><button data-a="no">${A.no}</button><button data-a="cant">${A.cant}</button>
+        ${st.na ? `<button data-a="na" class="ghost">${A.na}</button>` : ''}
+      </div>
+    </div>${footer()}`;
+    app.querySelectorAll('.btns button').forEach(b => b.onclick = () => answer(b.dataset.a));
+    wireFoot();
+  }
+
+  function renderEscape() {
+    const pe = S.pendingEscape, v = C.verdicts[pe.r.stop];
+    app.innerHTML = `<div class="card">
+      <div class="qid"><b>${esc(pe.st)}</b> Escape hatch · before commitment</div>
+      <p class="q">This would stop the run: ${esc(v.title)}.</p>
+      <div class="escape">${esc(pe.r.escape)}</div>
+      <p class="plain">Nothing has been spent yet, so the solver can fix this now. Can they?</p>
+      <div class="btns"><button class="primary" data-ok="1">Yes, fixed now</button><button data-ok="0">No</button></div>
+    </div>${footer()}`;
+    app.querySelectorAll('[data-ok]').forEach(b => b.onclick = () => escapeResolve(b.dataset.ok === '1'));
+    wireFoot();
+  }
+
+  function aLabel(a) {
+    if (a && a.startsWith('type:')) return C.claimTypes[a.slice(5)].label;
+    return { yes:A.yes, no:A.no, cant:A.cant, na:A.na }[a] || a;
+  }
+
+  function reportText(vid) {
+    const v = C.verdicts[vid];
+    const L = [];
+    L.push('VECTOR-CONSTRAINT INDEX v' + C.meta.version + ' (' + C.meta.docRef + ')');
+    if (S.name) L.push('Claim: ' + S.name);
+    if (S.stake) L.push('Evaluator stake: ' + S.stake);
+    L.push('Stage: ' + C.stages[S.stage].label);
+    if (S.claim) L.push('Claim type: ' + C.claimTypes[S.claim].label);
+    if (S.lane) L.push('Lane: ' + C.lanes[S.lane].label);
+    L.push('VERDICT: ' + v.title.toUpperCase() + (v.principle ? ' (' + v.principle + ')' : ''));
+    L.push(v.meaning);
+    if (S.stop) { L.push(''); L.push('Stopped at ' + S.stop.id + ': ' + S.stop.q); if (S.stop.followup) L.push('Ask: ' + S.stop.followup); if (S.stop.reentry) L.push(S.stop.reentry); }
+    if (S.soft.length) { L.push(''); L.push('Soft fails (' + S.soft.length + '):'); S.soft.forEach(s => L.push('  ' + s.id + '  ' + s.q + '\n      Ask: ' + s.followup)); }
+    if (S.flags.length) { L.push(''); L.push('Flags: ' + S.flags.join('; ')); }
+    L.push(''); L.push('Path:'); S.log.forEach(l => L.push('  ' + l.id + '  ' + aLabel(l.a) + '  ' + l.q));
+    L.push(''); L.push(C.meta.author + ' · ' + C.meta.license);
+    return L.join('\n');
+  }
+
+  function renderResult() {
+    const vid = verdictId(), v = C.verdicts[vid];
+    const sample = S.sample ? `<div class="sample">Example run: ${esc(S.sample)}</div>` : '';
+    const afterNote = S.stop && S.stop.afterCommit ? `<p class="m">${esc(C.stages.after.note)}</p>` : '';
+    const chips = [
+      S.name && `<span class="chip">${esc(S.name)}</span>`,
+      S.claim && `<span class="chip">Claim: ${esc(C.claimTypes[S.claim].label)}</span>`,
+      S.lane && `<span class="chip">Lane: ${esc(C.lanes[S.lane].label)}</span>`,
+      `<span class="chip">${esc(C.stages[S.stage].label)}</span>`,
+      S.stake && `<span class="chip">Evaluator stake: ${esc(S.stake)}</span>`,
+      ...S.flags.map(f => `<span class="chip flag">${esc(f)}</span>`)
+    ].filter(Boolean).join('');
+    const stopBlock = S.stop ? `<h2>Where it stopped</h2><div class="fail"><div class="id">${esc(S.stop.id)}</div><div class="fq">${esc(S.stop.q)}</div>${S.stop.followup ? `<div class="fu">Ask the solver: ${esc(S.stop.followup)}</div>` : ''}${S.stop.reentry ? `<div class="fq" style="margin-top:4px">${esc(S.stop.reentry)}</div>` : ''}</div>` : '';
+    const softBlock = S.soft.length ? `<h2>Soft fails · ${S.soft.length}</h2>` + S.soft.map(s => `<div class="fail soft"><div class="id">${esc(s.id)}</div><div class="fq">${esc(s.q)}</div><div class="fu">Ask the solver: ${esc(s.followup || '')}</div></div>`).join('') : '';
+    const path = `<h2>Path taken</h2><div class="path"><table>${S.log.map(l => `<tr><td>${esc(l.id)}</td><td>${esc(l.q)}</td><td class="a-${(l.a||'').startsWith('type:')?'na':esc(l.a)}">${esc(aLabel(l.a))}</td></tr>`).join('')}</table></div>`;
+    app.innerHTML = `${sample}<div class="verdict v-${v.kind}"><div class="t">${esc(v.title)}</div>${v.principle ? `<div class="p">${esc(v.principle)}</div>` : ''}<p class="m">${esc(v.meaning)}</p>${afterNote}</div>
+      <div class="chips">${chips}</div>
+      ${stopBlock}${softBlock}${path}
+      <h2>Report</h2>
+      <div class="btns"><button class="primary" id="cp">Copy report</button><button id="again">Evaluate another claim</button>${S.sample ? '' : '<button class="ghost" id="bk">Change last answer</button>'}</div>
+      <textarea class="report" id="rep" readonly aria-label="Report text">${esc(reportText(vid))}</textarea>`;
+    document.getElementById('cp').onclick = async () => {
+      const t = document.getElementById('rep');
+      try { await navigator.clipboard.writeText(t.value); document.getElementById('cp').textContent = 'Copied'; }
+      catch (e) { t.focus(); t.select(); document.getElementById('cp').textContent = 'Selected: press copy'; }
+    };
+    document.getElementById('again').onclick = intro;
+    const bk = document.getElementById('bk'); if (bk) bk.onclick = () => { mode = 'run'; S.stop = null; S.done = false; back(); };
+  }
+
+  // ---------- examples (replayed through the same engine) ----------
+  const EXAMPLES = {
+    smallpox: { label:'Smallpox eradication, 1967', setup:{ name:'WHO Intensified Smallpox Eradication Programme (1967)', stake:'None', stage:'before' }, claim:'solution',
+      ans:{ L1:'no', VS:'no', L2:'yes', '5.1':'na','5.2':'na','6.1':'na','6.2':'na','7.1':'na','7.2':'na','7.3':'na','7.4':'na','8.4':'na', T0:'no' } },
+    malaria: { label:'Malaria eradication, 1955', setup:{ name:'WHO Global Malaria Eradication Programme (1955)', stake:'None', stage:'after' }, claim:'solution',
+      ans:{ L1:'yes', M2:'no' } },
+    retainer: { label:'Monitoring retainer on a fixable flaw', setup:{ name:'Year-3 monitoring retainer for a known SQL injection class', stake:'Client, pays the retainer', stage:'after' }, claim:'management',
+      ans:{ L1:'no', VS:'no', L2:'yes' } }
+  };
+  function runExample(key) {
+    const X = EXAMPLES[key];
+    S = fresh(); stack = []; mode = 'run'; P_S();
+    Object.assign(S, X.setup); S.sample = X.label;
+    let guard = 0;
+    S.i = 1; advance();
+    while (mode === 'run' && guard++ < 200) {
+      if (S.pendingEscape) { escapeResolve(false); break; }
+      const st = PLAN[S.i]; if (!st) { finish(); break; }
+      if (st.kind === 'claim') { S.claim = X.claim; S.log.push({ id:'CLAIM', q:'Claim type declared', a:'type:' + X.claim }); S.i++; advance(); continue; }
+      answer(X.ans[st.id] || 'yes');
+    }
+    render();
+    window.scrollTo({ top:0 });
+  }
+
+  function intro() {
+    mode = 'intro'; S = fresh(); renderRail();
+    app.innerHTML = `<div class="intro">
+      <div class="quote"><p>&ldquo;Institutions will try to preserve the problem to which they are the solution.&rdquo;</p><small>Clay Shirky. Named the Shirky Principle by Kevin Kelly, 2010.</small></div>
+      <p>The Shirky Principle tells you problem preservation exists. This tells you where. Run any claim that a problem is being solved through fixed questions: a contractor's quote, a government program, a grant, a treatment plan, a subscription, or your own project.</p>
+      <p>Answer each question <b>Yes</b>, <b>No</b>, or <b>Can't show it</b>. Can't show it counts as No: the burden of proof is on the solver. Kill forks end the run the moment one can't be passed. Claims that survive answer the full gauntlet. The same answers always give the same verdict.</p>
+      <p>VCI sets no standard. The outcome wanted by whoever bears the cost of the problem is the standard. A verdict describes the structure of the effort, not anyone's intent.</p>
+      <div class="btns"><button class="primary" id="begin">Start an evaluation</button></div>
+      <h2>Or see an example run</h2>
+      <div class="examples">${Object.entries(EXAMPLES).map(([k,x]) => `<button class="ghost" data-x="${k}">${esc(x.label)}</button>`).join('')}</div>
+    </div>`;
+    document.getElementById('begin').onclick = start;
+    app.querySelectorAll('[data-x]').forEach(b => b.onclick = () => runExample(b.dataset.x));
+  }
+
+  window.__VCI = { runExample, verdictId: () => verdictId(), state: () => S };
+  runExample('smallpox');
+})();
+</script>
+
+</body></html>

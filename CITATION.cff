@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use or adapt this work, please cite it as below."
+title: "The Vector-Constraint Index: A deterministic test of whether a problem is actually being solved"
+version: "1.0-RC3"
+date-released: 2026-09-29
+license: CC-BY-4.0
+doi: 10.5281/zenodo.23039677
+authors:
+  - family-names: Delgado
+    given-names: Andrew
+    affiliation: "Creator 1 LLC"
+    email: andrew.delgado@crea8or1.com
+keywords:
+  - falsification
+  - problem preservation
+  - Shirky Principle
+  - verification and validation
+  - decision diagnostics

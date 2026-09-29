@@ -1,0 +1,22 @@
+{
+  "title": "The Vector-Constraint Index: A deterministic test of whether a problem is actually being solved",
+  "upload_type": "publication",
+  "publication_type": "technicalnote",
+  "description": "An open diagnostic specification for testing whether a claim that a problem is being solved is a genuine attempt. It defines problem, solution, claim types, and vectors; classifies problems into Terminal, Finite, Inflow, and Adaptive lanes (the Delgado Vector Law); and routes any claim through six kill forks and a scored gauntlet to a deterministic verdict. Includes a validation run against historical eradication programmes, a self-audit, known objections, and a changelog.",
+  "creators": [
+    {
+      "name": "Delgado, Andrew",
+      "affiliation": "Creator 1 LLC"
+    }
+  ],
+  "license": "cc-by-4.0",
+  "version": "1.0-RC3",
+  "keywords": [
+    "falsification",
+    "problem preservation",
+    "Shirky Principle",
+    "verification and validation",
+    "decision diagnostics"
+  ],
+  "doi": "10.5281/zenodo.23039677"
+}
