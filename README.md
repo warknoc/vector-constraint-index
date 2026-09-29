@@ -38,6 +38,7 @@ The framework does not ask for trust. It asks to be tested. For where it stands 
 | `ASSESSMENT.md` | An honest assessment of what is strong and what is not proven yet | |
 | `ROADMAP.md` | What comes next, from the blind validation run to v1.0 | |
 | `CONTRIBUTING.md` | How to submit a break, and what a rule change must show | |
+| `evaluator/vci-refiner.js` | Question Refiner draft: evidence tiers and worked rulings for three benchmark questions (K3, K5, 1.3) | Code MIT; text CC BY 4.0 |
 | `tools/build_spec.py` | Rebuilds the spec from the question file (Python, Playwright) | Code MIT; generated text CC BY 4.0 |
 
 ## How it works, in one paragraph

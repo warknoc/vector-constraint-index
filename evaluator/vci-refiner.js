@@ -1,10 +1,10 @@
-// Vector-Constraint Index (VCI)
-// Subsystem: Question Refiner Metric (QRM) - Draft Specification
-// License: Open specification core; complete worked-example library reserved for the Evaluator's Handbook.
-// Agreement scores are determined strictly by empirical blind runs and are never populated manually.
-// vci-refiner.js : Question Refiner definitions.
-// Question text lives in vci-config.js; this file holds only the refinement.
-// A refinement tightens how a question is answered. It never changes the question.
+/* Vector-Constraint Index: Question Refiner definitions.
+   Copyright (c) 2026 Andrew Delgado. Text: CC BY 4.0. Code structure: MIT.
+   Status: draft. Agreement scores are set from the blind validation run, never by hand.
+   Question text lives in vci-config.js; this file holds only the refinement.
+   A refinement tightens how a question is answered. It never changes the question.
+   This file holds three benchmark entries. The complete library, every question and
+   cross-domain precedents, is the VCI Evaluator's Handbook. */
 window.VCI_REFINER = {
 
   K3: {

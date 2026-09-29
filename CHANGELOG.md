@@ -5,6 +5,11 @@ Each change names the objection or case that caused it. Accepted breaks are cred
 ## Credited breaks
 - RC2: brown tree snake entry routes not counted. Found by the author.
 
+## Unreleased (living copy)
+- Question Refiner draft added for K3, K5, and 1.3 (`evaluator/vci-refiner.js`). Agreement scores pending the blind run.
+- Assessment and roadmap added.
+- Evaluator uses system fonts only; no outside requests.
+
 ## v1.0-RC3 (2026-09-29)
 - Licensing split set: specification CC BY 4.0, evaluator code MIT, names reserved, ledger and teardowns separate.
 - Invitation to falsify added, with the standard for change and named credit for accepted breaks.

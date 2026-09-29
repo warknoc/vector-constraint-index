@@ -7,9 +7,9 @@
 :root {
   --bg:#f3f6f7; --panel:#ffffff; --ink:#12303b; --muted:#56707a; --line:#cfdce1; --wash:#e6eef1;
   --accent:#1f5f6e; --stop:#a3261c; --pass:#2d6a3a; --gaps:#8a5a00; --warn:#b3561c; --onink:#ffffff;
-  --display:"Archivo", "Liberation Sans", Arial, sans-serif;
-  --body:"Source Serif 4", Charter, Georgia, serif;
-  --mono:"JetBrains Mono", "DejaVu Sans Mono", monospace;
+  --display:system-ui, -apple-system, "Segoe UI", Roboto, "Liberation Sans", Arial, sans-serif;
+  --body:Charter, "Bitstream Charter", Cambria, Georgia, serif;
+  --mono:ui-monospace, "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg:#0d1b21; --panel:#132730; --ink:#e3eef1; --muted:#93aab2; --line:#2a4550; --wash:#1a333d;
@@ -100,8 +100,8 @@ textarea.report { font-family:var(--mono); font-size:12px; height:180px; margin-
   const C = window.VCI_CONFIG;
   const A = C.answers;
   const app = document.getElementById('app');
-  document.getElementById('docref').textContent = C.meta.docRef + ' Ã‚Â· v' + C.meta.version;
-  document.getElementById('fine').textContent = C.meta.author + ' Ã‚Â· Spec ' + C.meta.license + ', code MIT License Ã‚Â· DOI ' + (C.meta.doi || '') + ' Ã‚Â· Same answers always give the same verdict. Question text and thresholds live in vci-config.js.';
+  document.getElementById('docref').textContent = C.meta.docRef + ' · v' + C.meta.version;
+  document.getElementById('fine').textContent = C.meta.author + ' · Spec ' + C.meta.license + ', code MIT License · DOI ' + (C.meta.doi || '') + ' · Same answers always give the same verdict. Question text and thresholds live in vci-config.js.';
 
   const RAIL = ['K0','K1','K2','K3','K4','K5','K6','Gates','Track'];
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -295,7 +295,7 @@ textarea.report { font-family:var(--mono); font-size:12px; height:180px; margin-
     const title = st.title || ((st.id.startsWith('L') || st.id.startsWith('V')) ? 'Vectors and lane' : st.id.startsWith('M') ? 'Label check' : 'Intake');
     const ev = m.evidence ? `<details class="ev"><summary>What counts as Yes</summary><p>${esc(m.evidence)}</p></details>` : '';
     app.innerHTML = `<div class="card">
-      <div class="qid"><b>${esc(st.id)}</b> ${esc(title)}${st.soft ? ' Ã‚Â· soft' : ''}<span class="src">${esc(m.source || '')}</span></div>
+      <div class="qid"><b>${esc(st.id)}</b> ${esc(title)}${st.soft ? ' · soft' : ''}<span class="src">${esc(m.source || '')}</span></div>
       <p class="q">${esc(q)}</p>
       ${m.plain ? `<p class="plain">${esc(m.plain)}</p>` : ''}
       ${m.naNote ? `<p class="plain" style="font-style:normal;font-size:14px">${esc(m.naNote)}</p>` : ''}
@@ -312,7 +312,7 @@ textarea.report { font-family:var(--mono); font-size:12px; height:180px; margin-
   function renderEscape() {
     const pe = S.pendingEscape, v = C.verdicts[pe.r.stop];
     app.innerHTML = `<div class="card">
-      <div class="qid"><b>${esc(pe.st)}</b> Escape hatch Ã‚Â· before commitment</div>
+      <div class="qid"><b>${esc(pe.st)}</b> Escape hatch · before commitment</div>
       <p class="q">This would stop the run: ${esc(v.title)}.</p>
       <div class="escape">${esc(pe.r.escape)}</div>
       <p class="plain">Nothing has been spent yet, so the solver can fix this now. Can they?</p>
@@ -342,7 +342,7 @@ textarea.report { font-family:var(--mono); font-size:12px; height:180px; margin-
     if (S.soft.length) { L.push(''); L.push('Soft fails (' + S.soft.length + '):'); S.soft.forEach(s => L.push('  ' + s.id + '  ' + s.q + '\n      Ask: ' + s.followup)); }
     if (S.flags.length) { L.push(''); L.push('Flags: ' + S.flags.join('; ')); }
     L.push(''); L.push('Path:'); S.log.forEach(l => L.push('  ' + l.id + '  ' + aLabel(l.a) + '  ' + l.q));
-    L.push(''); L.push(C.meta.author + ' Ã‚Â· ' + C.meta.license);
+    L.push(''); L.push(C.meta.author + ' · ' + C.meta.license);
     return L.join('\n');
   }
 
@@ -359,7 +359,7 @@ textarea.report { font-family:var(--mono); font-size:12px; height:180px; margin-
       ...S.flags.map(f => `<span class="chip flag">${esc(f)}</span>`)
     ].filter(Boolean).join('');
     const stopBlock = S.stop ? `<h2>Where it stopped</h2><div class="fail"><div class="id">${esc(S.stop.id)}</div><div class="fq">${esc(S.stop.q)}</div>${S.stop.followup ? `<div class="fu">Ask the solver: ${esc(S.stop.followup)}</div>` : ''}${S.stop.reentry ? `<div class="fq" style="margin-top:4px">${esc(S.stop.reentry)}</div>` : ''}</div>` : '';
-    const softBlock = S.soft.length ? `<h2>Soft fails Ã‚Â· ${S.soft.length}</h2>` + S.soft.map(s => `<div class="fail soft"><div class="id">${esc(s.id)}</div><div class="fq">${esc(s.q)}</div><div class="fu">Ask the solver: ${esc(s.followup || '')}</div></div>`).join('') : '';
+    const softBlock = S.soft.length ? `<h2>Soft fails · ${S.soft.length}</h2>` + S.soft.map(s => `<div class="fail soft"><div class="id">${esc(s.id)}</div><div class="fq">${esc(s.q)}</div><div class="fu">Ask the solver: ${esc(s.followup || '')}</div></div>`).join('') : '';
     const path = `<h2>Path taken</h2><div class="path"><table>${S.log.map(l => `<tr><td>${esc(l.id)}</td><td>${esc(l.q)}</td><td class="a-${(l.a||'').startsWith('type:')?'na':esc(l.a)}">${esc(aLabel(l.a))}</td></tr>`).join('')}</table></div>`;
     app.innerHTML = `${sample}<div class="verdict v-${v.kind}"><div class="t">${esc(v.title)}</div>${v.principle ? `<div class="p">${esc(v.principle)}</div>` : ''}<p class="m">${esc(v.meaning)}</p>${afterNote}</div>
       <div class="chips">${chips}</div>
