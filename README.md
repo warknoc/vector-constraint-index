@@ -49,6 +49,12 @@ VCI sets no standard: the outcome wanted by whoever bears the cost of the proble
 
 Release candidate. v1.0 freezes after an independent blind validation run: at least 20 historical cases with known outcomes, at least a third of them known failures, scored by two or more evaluators who have not seen the outcomes. See the self-audit in the spec, Section 9.
 
+## Support
+
+VCI is free and self-funded. If it saves you time or money, or catches something worth catching:
+
+- **USDC (Ethereum / Base):** `0x9805F8fd4A23Dd39cce11c03C10e6f966B1D6755`
+
 ## Names
 
 Vector-Constraint Index™, VCI™, and Delgado Vector Law™ are trademarks of Creator 1 LLC. The licenses cover the work, not the names. See `TRADEMARKS.md`.
